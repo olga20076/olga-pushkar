@@ -1449,10 +1449,10 @@
         ['Добрий день!', 'Buongiorno', 'буонджОрно']
       ];
       const L = {
-        uk: { score: 'Складено', of: 'з', ok: 'Так!', bad: 'Майже. Натисни «Спочатку» і спробуй ще.' },
-        it: { score: 'Fatte', of: 'su', ok: 'Giusto!', bad: 'Quasi. Premi «Da capo» e riprova.' }
+        uk: { score: 'Складено', of: 'з', ok: 'Так!', bad: 'Майже. Неправильні слова повернулися, спробуй ще.' },
+        it: { score: 'Fatte', of: 'su', ok: 'Giusto!', bad: 'Quasi. Le parole sbagliate sono tornate, riprova.' }
       };
-      let k = 0, done = 0, sel = [], words = [], locked = false;
+      let k = 0, done = 0, sel = [], words = [], locked = false, timer = null, retry = false;
       const ua = document.getElementById('gUa'), slot = document.getElementById('gSlot'),
             pool = document.getElementById('gPool'), msg = document.getElementById('gMsg'),
             sc = document.getElementById('gScore');
@@ -1479,6 +1479,7 @@
         const w = P[k][1].split(' ');
         words = w.map((t, id) => ({ t, id, used: false }));
         if (w.length > 1) { let n = 0; do { words = shuffle(words); n++; } while (words.map(o => o.t).join(' ') === P[k][1] && n < 10); }
+        clearTimeout(timer); timer = null; retry = false;
         sel = []; locked = false;
         slot.className = 'game-slot'; msg.className = 'game-msg'; msg.textContent = '';
         ua.textContent = P[k][0];
@@ -1487,18 +1488,30 @@
       function check() {
         if (sel.length < P[k][1].split(' ').length) return;
         if (sel.map(o => o.t).join(' ') === P[k][1]) {
-          locked = true; done = Math.min(done + 1, P.length);
+          locked = true; retry = false; done = Math.min(done + 1, P.length);
           slot.className = 'game-slot ok'; msg.className = 'game-msg ok';
           msg.textContent = L[lg()].ok + ' ' + P[k][1] + ' — ' + P[k][2];
           score();
         } else {
-          slot.className = 'game-slot bad'; msg.className = 'game-msg bad';
-          msg.textContent = L[lg()].bad;
+          locked = true; retry = false;
+          slot.className = 'game-slot bad'; msg.className = 'game-msg'; msg.textContent = '';
+          const target = P[k][1].split(' ');
+          timer = setTimeout(() => {
+            timer = null;
+            let n = 0;
+            while (n < sel.length && sel[n].t === target[n]) n++;
+            sel.slice(n).forEach(o => { o.used = false; });
+            sel = sel.slice(0, n);
+            locked = false; retry = true;
+            slot.className = 'game-slot'; msg.className = 'game-msg bad';
+            msg.textContent = L[lg()].bad;
+            draw();
+          }, 1000);
         }
       }
       document.getElementById('gReset').onclick = load;
       document.getElementById('gNext').onclick = () => { k = (k + 1) % P.length; load(); };
-      window.gameRefresh = () => { score(); if (slot.classList.contains('bad')) msg.textContent = L[lg()].bad; else if (locked) msg.textContent = L[lg()].ok + ' ' + P[k][1] + ' — ' + P[k][2]; };
+      window.gameRefresh = () => { score(); if (retry) msg.textContent = L[lg()].bad; else if (slot.classList.contains('ok')) msg.textContent = L[lg()].ok + ' ' + P[k][1] + ' — ' + P[k][2]; };
       load();
     })();
 

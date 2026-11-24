@@ -8,7 +8,7 @@
   <meta property="og:title" content="Olga Pushkar — Italiano con Olga" />
   <meta property="og:description" content="Підручник італійської для україномовних: 31 урок з нуля. Купити на Amazon.it" />
   <meta property="og:type" content="website" />
-  <meta property="og:image" content="book-main.jpg" />
+  <meta property="og:image" content="https://olga-pushkar.vercel.app/book-main.jpg" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -593,6 +593,22 @@
     }
     .lesson-nav { display: flex; gap: 12px; margin-top: 12px; }
 
+    .game { margin: 0 0 44px; }
+    .game h3 { font-size: 1.75rem; margin-bottom: 6px; }
+    .game-box { max-width: 420px; margin-top: 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; box-shadow: var(--shadow); }
+    .game-top { display: flex; justify-content: space-between; font-size: .9rem; color: var(--muted); margin-bottom: 8px; }
+    .game-ua { background: var(--accent); color: #fff; border-radius: 14px; padding: 14px; text-align: center; font-size: 1.3rem; font-weight: 600; }
+    .game-slot { min-height: 58px; margin-top: 12px; border: 1.5px dashed var(--border); border-radius: 14px; padding: 8px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .game-slot.ok { background: #E8F3EA; border-color: var(--accent); }
+    .game-slot.bad { background: #FBE9E4; border-color: var(--terracotta); }
+    .game-pool { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+    .game-chip { font: inherit; font-size: 1.1rem; min-height: 44px; padding: 8px 14px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface-soft); color: var(--text); cursor: pointer; }
+    .game-chip:hover { border-color: var(--accent); }
+    .game-msg { min-height: 24px; margin-top: 10px; text-align: center; font-size: .95rem; }
+    .game-msg.ok { color: var(--accent); }
+    .game-msg.bad { color: var(--terracotta); }
+    .game-btns { display: flex; gap: 12px; justify-content: center; margin-top: 6px; }
+
     /* Digital Projects & Ecosystem */
     .cards-2 {
       display: grid;
@@ -1015,6 +1031,23 @@
         </div>
       </div>
 
+      <!-- Phrase game -->
+      <div class="game" id="game">
+        <h3 data-i18n="game_title">Склади фразу</h3>
+        <p data-i18n="game_sub">Натискай на слова по порядку й склади фразу з уроку 1.</p>
+        <div class="game-box">
+          <div class="game-top"><span data-i18n="game_prompt">Скажи по-італійськи</span><span id="gScore"></span></div>
+          <div class="game-ua" id="gUa"></div>
+          <div class="game-slot" id="gSlot"></div>
+          <div class="game-pool" id="gPool"></div>
+          <div class="game-msg" id="gMsg" aria-live="polite"></div>
+          <div class="game-btns">
+            <button type="button" class="btn btn-secondary" id="gReset" data-i18n="game_reset">Спочатку</button>
+            <button type="button" class="btn btn-secondary" id="gNext" data-i18n="game_next">Далі</button>
+          </div>
+        </div>
+      </div>
+
       <!-- 3 Books In Development -->
       <div class="upcoming-header">
         <h3 data-i18n="upcoming_title">Наступні книги серії (готуються до друку)</h3>
@@ -1221,6 +1254,11 @@
         pdf_btn: "Читати безкоштовний урок",
         lesson_title: "Безкоштовний урок: Знайомство",
         lesson_sub: "Гортай сторінки вбік, як у книзі. Це урок 1 із підручника.",
+        game_title: "Склади фразу",
+        game_sub: "Натискай на слова по порядку й склади фразу з уроку 1.",
+        game_prompt: "Скажи по-італійськи",
+        game_reset: "Спочатку",
+        game_next: "Далі",
         upcoming_title: "Наступні книги серії (готуються до друку)",
         upcoming_sub: "Підписуйтесь на Instagram @olga.pushkar, щоб не пропустити старт продажів нових підручників.",
         status_dev: "У розробці",
@@ -1299,6 +1337,11 @@
         pdf_btn: "Leggi la lezione gratuita",
         lesson_title: "Lezione gratuita: Conoscenza",
         lesson_sub: "Scorri le pagine di lato, come nel libro. È la lezione 1 del manuale.",
+        game_title: "Forma la frase",
+        game_sub: "Tocca le parole in ordine e forma una frase della lezione 1.",
+        game_prompt: "Dillo in italiano",
+        game_reset: "Da capo",
+        game_next: "Avanti",
         upcoming_title: "Prossime uscite della collana (in preparazione)",
         upcoming_sub: "Segui @olga.pushkar su Instagram per ricevere aggiornamenti sulla pubblicazione dei nuovi volumi.",
         status_dev: "In preparazione",
@@ -1388,7 +1431,72 @@
           el.textContent = translations[lang][key];
         }
       });
+      if (window.gameRefresh) window.gameRefresh();
     }
+
+
+    (function () {
+      const P = [
+        ['Мене звати Ольга', 'Mi chiamo Olga', 'мі кьЯмо Ольга'],
+        ['Я живу у Верчеллі', 'Abito a Vercelli', 'Абіто а верчЕллі'],
+        ['Я працюю в Турині', 'Lavoro a Torino', 'лавОро а торІно'],
+        ['Я розмовляю українською', 'Parlo ucraino', 'пАрло украЇно'],
+        ['Я не розумію', 'Non capisco', 'нон капІско'],
+        ['Добрий день!', 'Buongiorno', 'буонджОрно']
+      ];
+      const L = {
+        uk: { score: 'Складено', of: 'з', ok: 'Так!', bad: 'Майже. Натисни «Спочатку» і спробуй ще.' },
+        it: { score: 'Fatte', of: 'su', ok: 'Giusto!', bad: 'Quasi. Premi «Da capo» e riprova.' }
+      };
+      let k = 0, done = 0, sel = [], words = [], locked = false;
+      const ua = document.getElementById('gUa'), slot = document.getElementById('gSlot'),
+            pool = document.getElementById('gPool'), msg = document.getElementById('gMsg'),
+            sc = document.getElementById('gScore');
+      if (!ua) return;
+      const lg = () => (document.documentElement.lang === 'it' ? 'it' : 'uk');
+      function shuffle(a) {
+        a = a.slice();
+        for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+        return a;
+      }
+      function chip(t, fn) {
+        const b = document.createElement('button');
+        b.type = 'button'; b.className = 'game-chip'; b.textContent = t; b.onclick = fn;
+        return b;
+      }
+      function score() { sc.textContent = L[lg()].score + ': ' + done + ' ' + L[lg()].of + ' ' + P.length; }
+      function draw() {
+        slot.innerHTML = ''; pool.innerHTML = '';
+        sel.forEach(o => slot.appendChild(chip(o.t, () => { if (locked) return; o.used = false; sel = sel.filter(x => x !== o); draw(); })));
+        words.forEach(o => { if (!o.used) pool.appendChild(chip(o.t, () => { if (locked) return; o.used = true; sel.push(o); draw(); check(); })); });
+        score();
+      }
+      function load() {
+        const w = P[k][1].split(' ');
+        words = w.map((t, id) => ({ t, id, used: false }));
+        if (w.length > 1) { let n = 0; do { words = shuffle(words); n++; } while (words.map(o => o.t).join(' ') === P[k][1] && n < 10); }
+        sel = []; locked = false;
+        slot.className = 'game-slot'; msg.className = 'game-msg'; msg.textContent = '';
+        ua.textContent = P[k][0];
+        draw();
+      }
+      function check() {
+        if (sel.length < P[k][1].split(' ').length) return;
+        if (sel.map(o => o.t).join(' ') === P[k][1]) {
+          locked = true; done = Math.min(done + 1, P.length);
+          slot.className = 'game-slot ok'; msg.className = 'game-msg ok';
+          msg.textContent = L[lg()].ok + ' ' + P[k][1] + ' — ' + P[k][2];
+          score();
+        } else {
+          slot.className = 'game-slot bad'; msg.className = 'game-msg bad';
+          msg.textContent = L[lg()].bad;
+        }
+      }
+      document.getElementById('gReset').onclick = load;
+      document.getElementById('gNext').onclick = () => { k = (k + 1) % P.length; load(); };
+      window.gameRefresh = () => { score(); if (slot.classList.contains('bad')) msg.textContent = L[lg()].bad; else if (locked) msg.textContent = L[lg()].ok + ' ' + P[k][1] + ' — ' + P[k][2]; };
+      load();
+    })();
 
     (function () {
       let saved = null;
